@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Course Catalog</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #2b3440;
+    --muted: #6b7684;
+    --accent: #3a7ca5;
+    --accent-dark: #2f6689;
+    --border: #e3e7ec;
+    --free: #2e8b57;
+    --premium: #b8860b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 32px 16px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  header { margin-bottom: 28px; }
+  header h1 { font-size: 1.8rem; font-weight: 600; }
+  header p { color: var(--muted); margin-top: 4px; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 12px; }
+
+  /* Section 1: course list */
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filters button {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .course-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    text-align: left;
+    background: var(--card);
+    font: inherit;
+    color: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .course-card:hover { border-color: var(--accent); }
+  .course-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(58,124,165,0.25); }
+  .course-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-bottom: 8px;
+  }
+  .badge.free { background: #e6f4ec; color: var(--free); }
+  .badge.premium { background: #faf3e0; color: var(--premium); }
+  .course-card p { font-size: 0.88rem; color: var(--muted); }
+  .empty-note { color: var(--muted); font-size: 0.9rem; }
+
+  /* Section 2: details */
+  #details-title { margin-bottom: 6px; }
+  #details-type { margin-bottom: 10px; }
+  #details-desc { margin-bottom: 12px; color: var(--muted); }
+  #details-topics { padding-left: 20px; }
+  #details-topics li { margin-bottom: 4px; }
+
+  /* Section 3: subscribe */
+  .premium-note { color: var(--muted); margin-bottom: 14px; }
+  #subscribe-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  #subscribe-btn:hover { background: var(--accent-dark); }
+  #subscribe-msg {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #fdecec;
+    border: 1px solid #f3c1c1;
+    border-radius: 8px;
+    color: #9b3b3b;
+    font-size: 0.92rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Learning Course Catalog</h1>
+    <p>Browse free and premium learning sessions — all in one place. (Demo data only.)</p>
+  </header>
+
+  <section id="section-list" aria-labelledby="list-heading">
+    <h2 id="list-heading">Courses</h2>
+    <div class="filters" role="group" aria-label="Filter courses by type">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="free">Free</button>
+      <button data-filter="premium">Premium</button>
+    </div>
+    <div class="cards" id="course-cards"></div>
+    <p class="empty-note" id="empty-note" hidden>No courses match this filter right now.</p>
+  </section>
+
+  <section id="section-details" aria-labelledby="details-heading">
+    <h2 id="details-heading">Course details</h2>
+    <h3 id="details-title"></h3>
+    <p id="details-type"></p>
+    <p id="details-desc"></p>
+    <ul id="details-topics"></ul>
+  </section>
+
+  <section id="section-subscribe" aria-labelledby="subscribe-heading">
+    <h2 id="subscribe-heading">Subscribe to premium</h2>
+    <p class="premium-note">In this demo, premium access would unlock the full course library and downloadable lesson notes. Everything here is sample content — nothing is charged or stored.</p>
+    <button id="subscribe-btn">Subscribe</button>
+    <p id="subscribe-msg" role="status">This is only a demo — no real subscription happens here. Nothing was charged or saved.</p>
+  </section>
+</div>
+
+<script>
+  const courses = [
+    {
+      id: 1,
+      title: "Bahasa Malaysia Basics for Beginners",
+      type: "free",
+      teaser: "Start speaking everyday Malay with simple phrases used in Kuala Lumpur markets and mamak stalls.",
+      description: "A gentle introduction to everyday Bahasa Malaysia, built around common situations you meet across Malaysia — ordering food, greeting neighbours, and getting around town.",
+      topics: ["Greetings and polite expressions", "Ordering food at a mamak stall", "Numbers, prices and money terms", "Simple directions and transport phrases"]
+    },
+    {
+      id: 2,
+      title: "E-Wallet & Online Banking Safety",
+      type: "premium",
+      teaser: "Learn how to use Touch 'n Go eWallet and online banking safely, from a former bank IT trainer.",
+      description: "A practical session on staying safe with digital payments in Malaysia, covering scam warning signs, secure passwords, and what to do if something looks suspicious.",
+      topics: ["Spotting scam calls and phishing SMS", "Setting up secure e-wallet accounts", "Safe habits for online banking", "Steps to take after a suspicious transaction"]
+    },
+    {
+      id: 3,
+      title: "Introduction to Durian Farming",
+      type: "premium",
+      teaser: "A look into Musang King cultivation, from grafting saplings to exporting durian from Raub, Pahang.",
+      description: "An introductory course on durian cultivation in Malaysia, covering orchard setup, seasonal care, and how smallholders bring their harvest to market.",
+      topics: ["Choosing land and varieties", "Grafting and young-tree care", "Season management and harvesting", "Selling to local and export markets"]
+    },
+    {
+      id: 4,
+      title: "Batik Painting Workshop",
+      type: "free",
+      teaser: "Try traditional Malaysian batik-making at home with wax, dye, and a simple cotton square.",
+      description: "A hands-on sampler of Malaysian batik art. Follow along with basic tools to create your first wax-resist piece and learn a little about where the craft comes from.",
+      topics: ["Tools and safe wax handling", "Basic canting techniques", "Simple motifs from East Coast batik", "Dyeing and finishing your piece"]
+    },
+    {
+      id: 5,
+      title: "Coding with Python: Weekend Sampler",
+      type: "free",
+      teaser: "Write your first Python scripts using examples inspired by Malaysian weather and food data.",
+      description: "A friendly first step into Python programming using small, fun exercises — no experience needed. All examples use invented sample data.",
+      topics: ["Installing Python and running scripts", "Variables and simple calculations", "Making small lists and loops", "Printing a tiny weather summary"]
+    },
+    {
+      id: 6,
+      title: "Homestay Business Essentials",
+      type: "premium",
+      teaser: "Turn a spare room or family house into a licensed Malaysian homestay, step by step.",
+      description: "An overview of running a small homestay in Malaysia, covering registration basics, guest communication, and simple housekeeping systems.",
+      topics: ["Registration and local requirements", "Listing photos that guests trust", "Messaging guests politely and clearly", "Cleaning checklists and restocking"]
+    }
+  ];
+
+  let selectedId = courses[0].id;
+  let activeFilter = "all";
+
+  const cardsEl = document.getElementById("course-cards");
+  const emptyNote = document.getElementById("empty-note");
+  const detailsTitle = document.getElementById("details-title");
+  const detailsType = document.getElementById("details-type");
+  const detailsDesc = document.getElementById("details-desc");
+  const detailsTopics = document.getElementById("details-topics");
+  const subscribeMsg = document.getElementById("subscribe-msg");
+
+  function renderCards() {
+    const visible = courses.filter(c => activeFilter === "all" || c.type === activeFilter);
+    cardsEl.innerHTML = "";
+    emptyNote.hidden = visible.length > 0;
+    visible.forEach(c => {
+      const btn = document.createElement("button");
+      btn.className = "course-card" + (c.id === selectedId ? " selected" : "");
+      btn.setAttribute("aria-pressed", c.id === selectedId);
+      const badge = document.createElement("span");
+      badge.className = "badge " + c.type;
+      badge.textContent = c.type;
+      const h3 = document.createElement("h3");
+      h3.textContent = c.title;
+      const p = document.createElement("p");
+      p.textContent = c.teaser;
+      btn.append(badge, h3, p);
+      btn.addEventListener("click", () => {
+        selectedId = c.id;
+        renderCards();
+        renderDetails();
+      });
+      cardsEl.appendChild(btn);
+    });
+  }
+
+  function renderDetails() {
+    const c = courses.find(x => x.id === selectedId) || courses[0];
+    detailsTitle.textContent = c.title;
+    detailsType.innerHTML = "";
+    const badge = document.createElement("span");
+    badge.className = "badge " + c.type;
+    badge.textContent = c.type + " course";
+    detailsType.appendChild(badge);
+    detailsDesc.textContent = c.description;
+    detailsTopics.innerHTML = "";
+    c.topics.forEach(t => {
+      const li = document.createElement("li");
+      li.textContent = t;
+      detailsTopics.appendChild(li);
+    });
+  }
+
+  document.querySelectorAll(".filters button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll(".filters button").forEach(b => b.classList.toggle("active", b === btn));
+      renderCards();
+    });
+  });
+
+  document.getElementById("subscribe-btn").addEventListener("click", () => {
+    subscribeMsg.style.display = "block";
+  });
+
+  renderCards();
+  renderDetails();
+</script>
+</body>
+</html>
